@@ -1,13 +1,19 @@
 package com.louis.bigdata
 
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.SparkSession
 
 object SparkWordCountApp {
   def main(args: Array[String]): Unit = {
-    val sparkConf = new SparkConf().setMaster("local[*]").setAppName("SparkWordCountApp")//local mode
-    val sc = new SparkContext(sparkConf)
+//    val sparkConf = new SparkConf().setMaster("local[*]").setAppName("SparkWordCountApp")//local mode
+//    val sc = new SparkContext(sparkConf)
 
-    val rdd = sc.textFile("file:///Users/xiangluo/Documents/GitHub/Spark_WordCount/data/input.txt")
+    val spark = SparkSession
+      .builder()
+      .appName("SparkWordCountApp")
+      .master("local[*]")
+      .getOrCreate()
+    val rdd = spark.sparkContext.textFile("file:///Users/xiangluo/Documents/GitHub/Spark_WordCount/data/input.txt")
 
 //    rdd.collect().foreach(println)
 
@@ -16,6 +22,6 @@ object SparkWordCountApp {
       .map(x=>(x._2,x._1))
       .saveAsTextFile("file:///Users/xiangluo/Documents/GitHub/Spark_WordCount/out/")
 
-    sc.stop()
+    spark.close()
   }
 }
