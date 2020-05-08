@@ -15,6 +15,13 @@ Sparkconf is the class which gives you the various option to provide configurati
 
 Sparkcontext is the entry point for spark environment. For every sparkapp you need to create the sparkcontext object. In spark 2 you can use sparksession instead of sparkcontext.
 
+SparkSession is the entry point into all functionality in Spark is the SparkSession class. To create a basic SparkSession, just use SparkSession.builder():
+
+For implicit conversions like converting RDDs to DataFrames
+```
+import spark.implicits._
+```
+
 setMaster and setAppName are the two properties that must be configured
 
 ```
