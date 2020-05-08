@@ -211,7 +211,7 @@ spark-submit \
 file:///Users/xiangluo/data/input.txt file:///Users/xiangluo/data/out
 ```
 
-# Example Submitted on Yarn
+# Example Submitted with Yarn mode
 
 Ensure that HADOOP_CONF_DIR or YARN_CONF_DIR points to the directory which contains the (client side) configuration files for the Hadoop cluster.
 
@@ -239,4 +239,42 @@ hdfs://localhost:9000/data/input/input.txt hdfs://localhost:9000/data/out
 Print the result
 ```
 hadoop fs -text '/data/out/part*'
+```
+
+# Example Submitted with Standalone mode
+
+```
+$ cp slaves.template slaves
+```
+
+localhost
+
+```
+$ cp spark-env.sh.template spark-env.sh
+```
+
+SPARK_MASTER_HOST=localhost
+
+```
+$ ./sbin/start-all.sh
+```
+JPS: master worker
+
+
+Submit the Spark job
+```
+spark-submit \
+--class com.louis.bigdata.SparkWordCountAppV2 \
+--master spark://localhost:7077 \
+--name SparkWordCountAppV2 \
+--driver-memory 4g \
+--executor-memory 2g \
+--executor-cores 1 \
+/Users/xiangluo/Documents/GitHub/Spark_WordCount/target/sparkwordcount-1.0.jar \
+hdfs://localhost:9000/data/input/input.txt hdfs://localhost:9000/data/out2
+```
+
+Print the result
+```
+hadoop fs -text "/data/out2/par*"
 ```
