@@ -22,10 +22,13 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 val conf = new SparkConf()
              .setMaster("local[2]")
-             .setAppName("CountingSheep")
+             .setAppName("SparkWordCountApp")
 val sc = new SparkContext(conf)
 val rdd = sc.textFile("file:///Users/xiangluo/Documents/GitHub/Spark_WordCount/data/input.txt")
 ```
+
+Note that we run with local[2], meaning two threads. 
+
 ```
 import org.apache.spark.sql.SparkSession
 
@@ -37,7 +40,7 @@ val spark = SparkSession
 val rdd = spark.sparkContext.textFile("file:///Users/xiangluo/Documents/GitHub/Spark_WordCount/data/input.txt")
 
 ```
-Note that we run with local[2], meaning two threads. local[N] to run locally with N threads. local[*] Run Spark locally with as many worker threads as logical cores on your machine.
+local[N] to run locally with N threads. local[*] Run Spark locally with as many worker threads as logical cores on your machine.
 
 ## flatmap and map
 
@@ -127,3 +130,113 @@ Input: File
 Requirement: Count the frequence of each word in the file
 
 Output: File
+
+# Example in Spark-Shell local
+```
+xiangluo@Xiangs-MacBook-Pro spark-2.4.5-bin-hadoop2.7 % spark-shell --master local
+20/05/07 03:18:19 WARN Utils: Your hostname, Xiangs-MacBook-Pro.local resolves to a loopback address: 127.0.0.1; using 192.168.0.101 instead (on interface en0)
+20/05/07 03:18:19 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+20/05/07 03:18:19 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+Spark context Web UI available at http://192.168.0.101:4040
+Spark context available as 'sc' (master = local, app id = local-1588846705608).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.4.5
+      /_/
+         
+Using Scala version 2.11.12 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_241)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> val rdd = sc.textFile("file:///Users/xiangluo/data/input.txt")
+rdd: org.apache.spark.rdd.RDD[String] = file:///Users/xiangluo/data/input.txt MapPartitionsRDD[1] at textFile at <console>:24
+
+scala> rdd.collect()
+res0: Array[String] = Array(hello,spark,hadoop, ppl,hello,spark, hadoop)
+
+scala> rdd.flatmap(_.split(",")).map(word => (word,1)).reduceByKey(_+_)
+<console>:26: error: value flatmap is not a member of org.apache.spark.rdd.RDD[String]
+       rdd.flatmap(_.split(",")).map(word => (word,1)).reduceByKey(_+_)
+           ^
+
+scala> rdd.flatMap(_.split(",")).map(word => (word,1)).reduceByKey(_+_)
+res2: org.apache.spark.rdd.RDD[(String, Int)] = ShuffledRDD[4] at reduceByKey at <console>:26
+
+scala> res2.collect()
+res3: Array[(String, Int)] = Array((spark,2), (hadoop,2), (hello,2), (ppl,1))
+
+scala> rdd.flatMap(_.split(",")).map(word => (word,1)).reduceByKey(_+_).map(x => (x._2,x._1)).sortByKey(false).map(x => (x._2,x._1)).collect()
+res4: Array[(String, Int)] = Array((spark,2), (hadoop,2), (hello,2), (ppl,1))
+```
+
+# Example in Spark-Submit local
+
+If we want to use spark-submit in local mode, we need to comment 
+```
+setMaster("local[*]").setAppName("SparkWordCountApp")
+```
+
+Because these configurations are passed by means of parameters
+
+
+Build a jar file with Maven
+
+```
+$ mvn package
+```
+
+Launching Applications with spark-submit
+
+Some of the commonly used options are:
+```
+--class: The entry point for your application (e.g. org.apache.spark.examples.SparkPi)
+--master: The master URL for the cluster (e.g. spark://23.195.26.187:7077)
+--deploy-mode: Whether to deploy your driver on the worker nodes (cluster) or locally as an external client (client) (default: client) †
+--conf: Arbitrary Spark configuration property in key=value format. For values that contain spaces wrap “key=value” in quotes (as shown).
+application-jar: Path to a bundled jar including your application and all dependencies. The URL must be globally visible inside of your cluster, for instance, an hdfs:// path or a file:// path that is present on all nodes.
+application-arguments: Arguments passed to the main method of your main class, if any
+```
+
+```
+spark-submit \
+--class com.louis.bigdata.SparkWordCountAppV2 \
+--master local \
+/Users/xiangluo/Documents/GitHub/Spark_WordCount/target/sparkwordcount-1.0.jar \
+file:///Users/xiangluo/data/input.txt file:///Users/xiangluo/data/out
+```
+
+# Example Submitted on Yarn
+
+Ensure that HADOOP_CONF_DIR or YARN_CONF_DIR points to the directory which contains the (client side) configuration files for the Hadoop cluster.
+
+```
+export HADOOP_CONF_DIR=/Users/xiangluo/app/hadoop-2.7.7/etc/hadoop
+```
+
+Upload the data to hdfs
+```
+hadoop fs -put input.txt /data/input/
+```
+Submit the Spark job
+```
+spark-submit \
+--class com.louis.bigdata.SparkWordCountAppV2 \
+--master yarn \
+--name SparkWordCountAppV2 \
+--driver-memory 4g \
+--executor-memory 2g \
+--executor-cores 1 \
+/Users/xiangluo/Documents/GitHub/Spark_WordCount/target/sparkwordcount-1.0.jar \
+hdfs://localhost:9000/data/input/input.txt hdfs://localhost:9000/data/out
+```
+
+Print the result
+```
+hadoop fs -text '/data/out/part*'
+```
