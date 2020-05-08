@@ -278,3 +278,13 @@ Print the result
 ```
 hadoop fs -text "/data/out2/par*"
 ```
+
+
+# Hadoop VS Spark
+
+![Screenshot](images/hadoopspark1.png)
+![Screenshot](images/hadoopspark2.png)
+![Screenshot](images/hadoopspark3.png)
+![Screenshot](images/hadoopspark4.png)
+![Screenshot](images/hadoopspark5.png)
+![Screenshot](images/hadoopspark6.png)
