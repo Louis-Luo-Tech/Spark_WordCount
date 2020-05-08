@@ -4,7 +4,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 object SparkWordCountApp {
   def main(args: Array[String]): Unit = {
-    val sparkConf = new SparkConf().setMaster("local[*]").setAppName("SparkWordCountApp")
+    val sparkConf = new SparkConf().setMaster("local[*]").setAppName("SparkWordCountApp")//local mode
     val sc = new SparkContext(sparkConf)
 
     val rdd = sc.textFile("file:///Users/xiangluo/Documents/GitHub/Spark_WordCount/data/input.txt")
